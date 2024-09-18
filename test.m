@@ -1,9 +1,20 @@
-% Alternatively we could not print "output" and "expected"
-% This would make the whole thing more flexible for stuff like
-% functions that receive or return more complex values than doubles
-% (Matlab is special anyway in the way that a function can have multiple return values)
+% Trial for some testrunner for Prog4Eng
+% - test is the test-harness for the function, see examples written there
+% - functions in CAPS are used as constant values
+% - test_function is the organizer of everything
+% - run_function runs the function and returns result and if function finished
+% - test_equal is function that tests equality for string, char, and double arrays
+% - isclose is function that tests if two float-values are close to each other
+% - stringify turns an array to a string for a nicer output.
 
-% Instead of a function we can also test the output of a script in a similar manner
+% Possible Extensions:
+% - Functions so far can only return one value (which is okay in most cases)
+% - Only supports arrays as output so far.
+%   Because test_equal function will fail on nested types,
+%   and stringify assumes arrays as input.
+% - Add a way to test output of a script instead of a function
+
+% Maybe move abs_tol, rel_tol to constants instead of arguments to the function
 
 function test()
     % clc; % maybe clc is annyoing for the students
@@ -11,17 +22,33 @@ function test()
 
     test_function(@() findRootByBisection(@(x) x, -1, 1), 0)
     test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
-    test_function(@() findRootByBisection(@(x) x, 1, 2), "error")
+    test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_fail=true)
     test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
+    test_function(@() [1, 2; 3, 4], [2, 3; 4, 5], abs_tol=1.0);
     test_function(@() infinite_loop(), 0);
+end
+
+% Define enum for return value of run_function
+function val = STATUS_FINISHED
+    val = 0;
+end
+function val = STATUS_ERROR
+    val = 1;
+end
+function val = STATUS_TIMEOUT
+    val = 2;
+end
+
+% Define constant for run_function
+function val = TIMEOUT_TRESH
+    % timeout time for function in seconds
+    val = 0.5;
 end
 
 function answer = infinite_loop()
     answer = 0; %#ok<NASGU>
-
     while true
     end
-
 end
 
 function print_header()
@@ -30,41 +57,54 @@ function print_header()
     fprintf("\n");
 end
 
-function test_function(f, expected, rel_tol, abs_tol)
-    % Executes function and prints result to terminal
+function test_function(f, expected, kwargs)
+    % Test if function generates expected output and writes result to terminal.
+    %
+    % Numbers are compared with `isclose` functions all other outputs with `isequal`
+    %
+    % Parameters
+    % ----------
+    % f: function_handle
+    %     Function to be tested against output.
+    % expected: any
+    %     Expected output, nested data cells and such are not really supported.
+    % kwargs.should_fail: logical, default false
+    %     Note if function should fail in this case.
+    %     Expected gets ignored if set to true.
+    % kwargs.rel_tol: double
+    %     Relative tolerance for comparing numbers.
+    % kwargs.abs_tol: double
+    %     Absolute tolerance for comparing numbers.
     arguments
         f (1, 1) function_handle
-        expected (1, 1) {string, double}
-        rel_tol (1, 1) double = 1e-09
-        abs_tol (1, 1) double = 0.0
+        expected
+        kwargs.should_fail (1, 1) logical = false
+        kwargs.rel_tol (1, 1) double = 1e-09
+        kwargs.abs_tol (1, 1) double = 0.0
     end
-
-    % Values of result:
+    % Values of result (only local to this function)
+    % I wish enums would not require an extra file :(
     PASSED = 0; % function returned & correct result
     FAILED = 1; % function returned & false result
     ERROR = 2; % function raised an error
     TIMEOUT = 3; % function did not return on time
 
-    expects_error = isstring(expected) && expected == "error";
-
-    % values of status and result are shared
-    % PASSED and FINISHED are named differently tho
-    % I wish enums would not require an extra file :(
-    FINISHED = 0;
     [answer, status] = run_function(f);
 
     switch status
-        case TIMEOUT
+        case STATUS_TIMEOUT
             result = TIMEOUT;
-        case ERROR
-            if expects_error
+
+        case STATUS_ERROR
+            if kwargs.should_fail
+                expected = "error";
                 result = PASSED;
             else
                 result = ERROR;
             end
 
-        case FINISHED
-            if isclose(answer, expected, rel_tol, abs_tol)
+        case STATUS_FINISHED
+            if test_equal(answer, expected, kwargs.rel_tol, kwargs.abs_tol)
                 result = PASSED;
             else
                 result = FAILED;
@@ -75,7 +115,6 @@ function test_function(f, expected, rel_tol, abs_tol)
     end
 
     %% Print to output
-
     % 1 is stdout
     % 2 is stderr
     % We (ab)use the fact that Matlab prints stderr red in terminal.
@@ -94,42 +133,54 @@ function test_function(f, expected, rel_tol, abs_tol)
 
     func = func2str(f);
     func = func(4:end); % get rid of `@()` at start
-    answer = string(answer);
-    expected = string(expected);
-    fprintf("%-50s %-12s %-12s", func, answer, expected);
+    answer = stringify(answer);
+    expected = stringify(expected);
 
+    % Maybe change this magic sizes?
+    fprintf("%-50s %-12s %-12s", func, answer, expected);
     fprintf("\n");
 
 end
 
 function [answer, status] = run_function(f)
     % answer is return value of function
-    % status is one of the following {FINISHED, ERROR, TIMEOUT}
+    % status is one of the following STATUS_ + {FINISHED, ERROR, TIMEOUT}
     % if status = {ERROR, TIMEOUT} then answer is {"error", "timeout"} respectively
-    FINISHED = 0;
-    ERROR = 2;
-    TIMEOUT = 3;
-    % time to wait [s] for future to finish
-    timeout_time = 0.5;
-
     try
         fut = parfeval(backgroundPool, f, 1);
-        ok = fut.wait('finished', timeout_time);
+        ok = fut.wait('finished', TIMEOUT_TRESH);
 
         if ok
             answer = fetchOutputs(fut);
-            status = FINISHED;
+            status = STATUS_FINISHED;
         else
             cancel(fut);
             answer = "timeout";
-            status = TIMEOUT;
+            status = STATUS_TIMEOUT;
         end
 
     catch
         answer = "error";
-        status = ERROR;
+        status = STATUS_ERROR;
     end
 
+end
+
+function answer = test_equal(a, b, rel_tol, abs_tol)
+    % if both arrays are number test via isclose
+    % else just go with exact equality.
+
+    % simple equality test first that simplifies other stuff
+    if ~isequal(size(a), size(b)) || ~isequal(class(a), class(b))
+        answer = false;
+    elseif isnumeric(a)
+        answer = true;
+        for k = 1:numel(a)
+            answer = answer && isclose(a(k), b(k), rel_tol, abs_tol);
+        end
+    else
+        answer = isequal(a, b);
+    end
 end
 
 function answer = isclose(a, b, rel_tol, abs_tol)
@@ -162,4 +213,20 @@ function answer = isclose(a, b, rel_tol, abs_tol)
     answer = (diff <= abs(rel_tol * b));
     answer = answer || (diff <= abs(rel_tol * a));
     answer = answer || (diff <= abs_tol);
+end
+
+function str = stringify(a)
+    % Creates a one-line string out of array a
+
+    if isequal(size(a), [1, 1])
+        str = string(a);
+        return;
+    end
+    a = string(a);
+    [nrows, ~] = size(a);
+    rows = strings(nrows, 1);
+    for row = 1:nrows
+        rows(row) = strjoin(a(row, :), ", ");
+    end
+    str = "[" + strjoin(rows, "; ") + "]";
 end
