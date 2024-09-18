@@ -7,12 +7,16 @@
 % - isclose is function that tests if two float-values are close to each other
 % - stringify turns an array to a string for a nicer output.
 
+% It is not a lot of code, I tried my best to make it readable.
+
 % Possible Extensions:
 % - Functions so far can only return one value (which is okay in most cases)
 % - Only supports arrays as output so far.
 %   Because test_equal function will fail on nested types,
 %   and stringify assumes arrays as input.
 % - Add a way to test output of a script instead of a function
+% - The output of a line is a bit limited, especially outout and expected,
+%   it is not given that they fit into their space.
 
 % Maybe move abs_tol, rel_tol to constants instead of arguments to the function
 
@@ -20,11 +24,19 @@ function test()
     % clc; % maybe clc is annyoing for the students
     print_header();
 
+    % test should pass
     test_function(@() findRootByBisection(@(x) x, -1, 1), 0)
+    % test should fail as output ~= expected 
     test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
+    % test should pass as function throws error
     test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_fail=true)
+    % test should fail as function fails to throw error
+    test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_fail=true);
+    % test should error as function throws unexpected error
     test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
+    % test should pass (with generous abs_tol)
     test_function(@() [1, 2; 3, 4], [2, 3; 4, 5], abs_tol=1.0);
+    % test should timeout as function does not finish on time
     test_function(@() infinite_loop(), 0);
 end
 
@@ -91,20 +103,26 @@ function test_function(f, expected, kwargs)
 
     [answer, status] = run_function(f);
 
+    % ignore expected
+    if kwargs.should_fail
+        expected = "error";
+    end
+
     switch status
         case STATUS_TIMEOUT
             result = TIMEOUT;
 
         case STATUS_ERROR
             if kwargs.should_fail
-                expected = "error";
                 result = PASSED;
             else
                 result = ERROR;
             end
 
         case STATUS_FINISHED
-            if test_equal(answer, expected, kwargs.rel_tol, kwargs.abs_tol)
+            if kwargs.should_fail
+                result = FAILED;
+            elseif test_equal(answer, expected, kwargs.rel_tol, kwargs.abs_tol)
                 result = PASSED;
             else
                 result = FAILED;
