@@ -11,14 +11,11 @@
 
 % Possible Extensions:
 % - Functions so far can only return one value (which is okay in most cases)
-% - Only supports arrays as output so far.
-%   Because test_equal function will fail on nested types,
-%   and stringify assumes arrays as input.
+% - Only supports arrays as output so far. Because test_equal function will
+%   fail on nested types, and stringify assumes arrays as input.
 % - Add a way to test output of a script instead of a function
-% - The output of a line is a bit limited, especially outout and expected,
-%   it is not given that they fit into their space.
-
-% Maybe move abs_tol, rel_tol to constants instead of arguments to the function
+% - The horizontal space in the terminal is limited, this can be a problem if
+%   expected and output value are too big.
 
 function test()
     % clc; % maybe clc is annyoing for the students
@@ -26,7 +23,7 @@ function test()
 
     % test should pass
     test_function(@() findRootByBisection(@(x) x, -1, 1), 0)
-    % test should fail as output ~= expected 
+    % test should fail as output ~= expected
     test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
     % test should pass as function throws error
     test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_fail=true)
@@ -34,10 +31,26 @@ function test()
     test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_fail=true);
     % test should error as function throws unexpected error
     test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
-    % test should pass (with generous abs_tol)
-    test_function(@() [1, 2; 3, 4], [2, 3; 4, 5], abs_tol=1.0);
+    % test should pass (with is within rel_tol)
+    test_function(@() [1, 2; 3, 4], [1 + 1e-10, 2 + 2e-10; 3 + 3e-10, 4 + 4e-10]);
     % test should timeout as function does not finish on time
     test_function(@() infinite_loop(), 0);
+end
+
+% Global constants
+function val = TIMEOUT_TRESH
+    % timeout time for function in seconds
+    val = 0.5;
+end
+function val = REL_TOL
+    % Relative tolerance for comparing numbers.
+    % see https://docs.python.org/3/library/math.html#math.isclose
+    val = 1e-09;
+end
+function val = ABS_TOL
+    % Absolute tolerance for comparing numbers.
+    % see https://docs.python.org/3/library/math.html#math.isclose
+    val = 0.0;
 end
 
 % Define enum for return value of run_function
@@ -51,12 +64,7 @@ function val = STATUS_TIMEOUT
     val = 2;
 end
 
-% Define constant for run_function
-function val = TIMEOUT_TRESH
-    % timeout time for function in seconds
-    val = 0.5;
-end
-
+% just little function to show timeout mechanic
 function answer = infinite_loop()
     answer = 0; %#ok<NASGU>
     while true
@@ -83,16 +91,12 @@ function test_function(f, expected, kwargs)
     % kwargs.should_fail: logical, default false
     %     Note if function should fail in this case.
     %     Expected gets ignored if set to true.
-    % kwargs.rel_tol: double
-    %     Relative tolerance for comparing numbers.
     % kwargs.abs_tol: double
     %     Absolute tolerance for comparing numbers.
     arguments
         f (1, 1) function_handle
         expected
         kwargs.should_fail (1, 1) logical = false
-        kwargs.rel_tol (1, 1) double = 1e-09
-        kwargs.abs_tol (1, 1) double = 0.0
     end
     % Values of result (only local to this function)
     % I wish enums would not require an extra file :(
@@ -122,7 +126,7 @@ function test_function(f, expected, kwargs)
         case STATUS_FINISHED
             if kwargs.should_fail
                 result = FAILED;
-            elseif test_equal(answer, expected, kwargs.rel_tol, kwargs.abs_tol)
+            elseif test_equal(answer, expected)
                 result = PASSED;
             else
                 result = FAILED;
@@ -184,7 +188,7 @@ function [answer, status] = run_function(f)
 
 end
 
-function answer = test_equal(a, b, rel_tol, abs_tol)
+function answer = test_equal(a, b)
     % if both arrays are number test via isclose
     % else just go with exact equality.
 
@@ -194,19 +198,19 @@ function answer = test_equal(a, b, rel_tol, abs_tol)
     elseif isnumeric(a)
         answer = true;
         for k = 1:numel(a)
-            answer = answer && isclose(a(k), b(k), rel_tol, abs_tol);
+            answer = answer && isclose(a(k), b(k));
         end
     else
         answer = isequal(a, b);
     end
 end
 
-function answer = isclose(a, b, rel_tol, abs_tol)
+function answer = isclose(a, b)
     % This function is the copied from the cpython implementation:
     % https://docs.python.org/3/library/math.html#math.isclose
 
     % sanity check on the inputs
-    if rel_tol < 0.0 || abs_tol < 0.0
+    if REL_TOL < 0.0 || ABS_TOL < 0.0
         error("tolerance must be non-negative");
     end
 
@@ -228,13 +232,13 @@ function answer = isclose(a, b, rel_tol, abs_tol)
 
     diff = abs(b - a);
 
-    answer = (diff <= abs(rel_tol * b));
-    answer = answer || (diff <= abs(rel_tol * a));
-    answer = answer || (diff <= abs_tol);
+    answer = (diff <= abs(REL_TOL * b));
+    answer = answer || (diff <= abs(REL_TOL * a));
+    answer = answer || (diff <= ABS_TOL);
 end
 
 function str = stringify(a)
-    % Creates a one-line string out of array a
+    % Creates a one-line string out of array
 
     if isequal(size(a), [1, 1])
         str = string(a);
@@ -244,7 +248,7 @@ function str = stringify(a)
     [nrows, ~] = size(a);
     rows = strings(nrows, 1);
     for row = 1:nrows
-        rows(row) = strjoin(a(row, :), ", ");
+        rows(row) = strjoin(a(row, :), ",");
     end
-    str = "[" + strjoin(rows, "; ") + "]";
+    str = "[" + strjoin(rows, ";") + "]";
 end
