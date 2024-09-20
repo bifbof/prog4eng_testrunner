@@ -1,4 +1,4 @@
-% Trial for some testrunner for Prog4Eng
+% Trial for a testrunner for Prog4Eng
 % - test is the test-harness for the function, see examples written there
 % - functions in CAPS are used as constant values
 % - test_function is the organizer of everything
@@ -26,12 +26,12 @@ function test()
     % test should fail as output ~= expected
     test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
     % test should pass as function throws error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_fail=true)
+    test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_error=true)
     % test should fail as function fails to throw error
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_fail=true);
+    test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_error=true);
     % test should error as function throws unexpected error
     test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
-    % test should pass (with is within rel_tol)
+    % test should pass (is within rel_tol)
     test_function(@() [1, 2; 3, 4], [1 + 1e-10, 2 + 2e-10; 3 + 3e-10, 4 + 4e-10]);
     % test should timeout as function does not finish on time
     test_function(@() infinite_loop(), 0);
@@ -88,15 +88,13 @@ function test_function(f, expected, kwargs)
     %     Function to be tested against output.
     % expected: any
     %     Expected output, nested data cells and such are not really supported.
-    % kwargs.should_fail: logical, default false
+    % kwargs.should_error: logical, default false
     %     Note if function should fail in this case.
     %     Expected gets ignored if set to true.
-    % kwargs.abs_tol: double
-    %     Absolute tolerance for comparing numbers.
     arguments
         f (1, 1) function_handle
         expected
-        kwargs.should_fail (1, 1) logical = false
+        kwargs.should_error (1, 1) logical = false
     end
     % Values of result (only local to this function)
     % I wish enums would not require an extra file :(
@@ -108,7 +106,7 @@ function test_function(f, expected, kwargs)
     [answer, status] = run_function(f);
 
     % ignore expected
-    if kwargs.should_fail
+    if kwargs.should_error
         expected = "error";
     end
 
@@ -117,14 +115,14 @@ function test_function(f, expected, kwargs)
             result = TIMEOUT;
 
         case STATUS_ERROR
-            if kwargs.should_fail
+            if kwargs.should_error
                 result = PASSED;
             else
                 result = ERROR;
             end
 
         case STATUS_FINISHED
-            if kwargs.should_fail
+            if kwargs.should_error
                 result = FAILED;
             elseif test_equal(answer, expected)
                 result = PASSED;
@@ -158,10 +156,9 @@ function test_function(f, expected, kwargs)
     answer = stringify(answer);
     expected = stringify(expected);
 
-    % Maybe change this magic sizes?
+    % Maybe change these magic sizes?
     fprintf("%-50s %-12s %-12s", func, answer, expected);
     fprintf("\n");
-
 end
 
 function [answer, status] = run_function(f)
