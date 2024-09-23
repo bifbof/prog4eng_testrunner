@@ -8,8 +8,8 @@ A test can:
 
 - _pass_, everything works as intended (correct output or expected error)
 - _fail_, does not succeed (wrong output or did not raise an error)
-- _error_, raised an unexpected error
-- _timeout_, took longer than expected
+- _error_, raises an unexpected error
+- _timeout_, takes longer than expected
 
 The following *constants* can be modified
 - `TIMEOUT_TRESH`, time until test times out
@@ -20,7 +20,7 @@ For comparing numbers the code was adapted from [this function](https://docs.pyt
 
 For adding new test cases, pass an anonymous function to `test_function` with the expected return value of the function. Again see `test.m` for examples.
 
-See below a test run, with a function of an exercise from last year.
+See below a test run, with a function of an exercise from 2023.
 
 
 ```matlab
