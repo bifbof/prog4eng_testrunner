@@ -1,23 +1,29 @@
-% Trial for a testrunner for Prog4Eng
-% - test is the test-harness for the function, see examples written there
-% - functions in CAPS are used as constant values
-% - test_function is the organizer of everything
-% - run_function runs the function and returns result and if function finished
-% - test_equal is function that tests equality for string, char, and double arrays
-% - isclose is function that tests if two float-values are close to each other
-% - stringify turns an array to a string for a nicer output.
+% Run tests for the function programmed in the exercise
+%
+% To call just run the following in the script or the command window:
+% test()
 
-% It is not a lot of code, I tried my best to make it readable.
+% Experiment for a testrunner for Prog4Eng
+% Date: 2024
+% Author: Christof Leutenegger
+% It is not a lot of code, I tried my best to make it readable. :)
 
-% Possible Extensions:
+% Short description for all functions as an overview
+% - `test` is the test-harness for the function, see there for examples.
+% - functions in CAPS are used as constant values.
+% - `test_function` runs a test and prints the output
+% - `run_function` runs function, returns result and if function finished.
+% - `test_equal`, `is_close`, `stringify` are smaller helper functions
+
+% Possible Extensions / Limitations:
 % - Functions so far can only return one value (which is okay in most cases)
 % - Only supports arrays as output so far. Because test_equal function will
 %   fail on nested types, and stringify assumes arrays as input.
-% - Add a way to test output of a script instead of a function
 % - The horizontal space in the terminal is limited, this can be a problem if
 %   expected and output value are too big.
 
 function test()
+
     % clc; % maybe clc is annyoing for the students
     print_header();
 
@@ -37,7 +43,7 @@ function test()
     test_function(@() infinite_loop(), 0);
 end
 
-% Global constants
+%% Global constants
 function val = TIMEOUT_TRESH
     % timeout time for function in seconds
     val = 0.5;
@@ -53,7 +59,7 @@ function val = ABS_TOL
     val = 0.0;
 end
 
-% Define enum for return value of run_function
+%% Enum for `run_function` return values
 function val = STATUS_FINISHED
     val = 0;
 end
@@ -64,12 +70,14 @@ function val = STATUS_TIMEOUT
     val = 2;
 end
 
-% just little function to show timeout mechanic
+%% Function to show timeout mechanic
 function answer = infinite_loop()
     answer = 0; %#ok<NASGU>
     while true
     end
 end
+
+%% Functions to run test
 
 function print_header()
     fprintf("          ");
