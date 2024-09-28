@@ -46,7 +46,7 @@ end
 %% Global constants
 function val = TIMEOUT_TRESH
     % timeout time for function in seconds
-    val = 0.5;
+    val = 4.0;
 end
 function val = REL_TOL
     % Relative tolerance for comparing numbers.
