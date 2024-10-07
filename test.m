@@ -9,7 +9,7 @@
 % It is not a lot of code, I tried my best to make it readable. :)
 
 % Short description for all functions as an overview
-% - `test` is the test-harness for the function, see there for examples.
+% - `test` is the test-harness/test-runner, see there for examples.
 % - functions in CAPS are used as constant values.
 % - `test_function` runs a test and prints the output
 % - `run_function` runs function, returns result and if function finished.
@@ -17,14 +17,12 @@
 
 % Possible Extensions / Limitations:
 % - Functions so far can only return one value (which is okay in most cases)
-% - Only supports arrays as output so far. Because test_equal function will
-%   fail on nested types, and stringify assumes arrays as input.
+% - Only supports arrays as output so far (includes scalars). Because test_equal
+%   will fail on nested types, and stringify assumes arrays as input.
 % - The horizontal space in the terminal is limited, this can be a problem if
 %   expected and output value are too big.
 
 function test()
-
-    % clc; % maybe clc is annyoing for the students
     print_header();
 
     % test should pass
@@ -211,8 +209,11 @@ function answer = test_equal(a, b)
 end
 
 function answer = isclose(a, b)
-    % This function is the copied from the cpython implementation:
+    % Copied from the cpython implementation:
     % https://docs.python.org/3/library/math.html#math.isclose
+
+    % This function could easily be vectorized but I decided
+    % against that for clearity + correctness.
 
     % sanity check on the inputs
     if REL_TOL < 0.0 || ABS_TOL < 0.0
