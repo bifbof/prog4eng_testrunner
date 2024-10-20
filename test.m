@@ -56,6 +56,9 @@ function val = ABS_TOL
     % see https://docs.python.org/3/library/math.html#math.isclose
     val = 0.0;
 end
+function val = FMT_STR
+    val = "%-50s %-12s %-12s";
+end
 
 %% Enum for `run_function` return values
 function val = STATUS_FINISHED
@@ -79,7 +82,7 @@ end
 
 function print_header()
     fprintf("          ");
-    fprintf("%-50s %-12s %-12s", "input", "output", "expected");
+    fprintf(FMT_STR, "input", "output", "expected"); %#ok<CTPCT>
     fprintf("\n");
 end
 
@@ -162,8 +165,7 @@ function test_function(f, expected, kwargs)
     answer = stringify(answer);
     expected = stringify(expected);
 
-    % Maybe change these magic sizes?
-    fprintf("%-50s %-12s %-12s", func, answer, expected);
+    fprintf(FMT_STR, func, answer, expected);
     fprintf("\n");
 end
 

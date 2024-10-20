@@ -15,6 +15,7 @@ The following *constants* can be modified
 - `TIMEOUT_TRESH`, time until test times out
 - `ABS_TOL`, absolute tolerance when comparing numbers
 - `REL_TOL`, relative tolerance when comparing numbers
+- `FMT_STR`, string that controls output format
 
 For comparing numbers the code was adapted from [this function](https://docs.python.org/3/library/math.html#math.isclose) &rarr; see there for an explanation for `ABS_TOL`, `REL_TOL`.
 
