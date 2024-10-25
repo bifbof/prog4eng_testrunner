@@ -197,14 +197,41 @@ function answer = test_equal(a, b)
     % if both arrays are number test via isclose
     % else just go with exact equality.
 
-    % simple equality test first that simplifies other stuff
+    % first simple equality check that simplifies other tests
+    % then handling of composite types recursively
+    % then fallback to isequal
     if ~isequal(size(a), size(b)) || ~isequal(class(a), class(b))
         answer = false;
-    elseif isnumeric(a)
+
+    elseif isfloat(a)
         answer = true;
         for k = 1:numel(a)
             answer = answer && isclose(a(k), b(k));
         end
+
+    elseif iscell(a)
+        answer = true;
+        for k = 1:numel(a)
+            answer = answer && test_equal(a{k}, b{k});
+        end
+
+    elseif isstruct(a)
+        fields = fieldnames(a);
+        if ~isequal(fields, fieldnames(b))
+            answer = false;
+            return;
+        end
+        answer = true;
+
+        for k = 1:numel(a)
+            for fidx = numel(fields)
+                answer = answer && test_equal(a(k).(fields(fidx)), b(k).fields(fidx));
+            end
+        end
+
+    elseif istabular(a)
+        warning("really tables? just use pandas or polar please");
+        answer = isequal(a, b);
     else
         answer = isequal(a, b);
     end
