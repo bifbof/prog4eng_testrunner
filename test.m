@@ -82,7 +82,7 @@ end
 
 function print_header()
     fprintf("          ");
-    fprintf(FMT_STR, "input", "output", "expected"); %#ok<CTPCT>
+    fprintf(FMT_STR, "input", "expected", "output"); %#ok<CTPCT>
     fprintf("\n");
 end
 
@@ -98,7 +98,7 @@ function test_function(f, expected, kwargs)
     % expected: any
     %     Expected output, nested data cells and such are not really supported.
     % kwargs.should_error: logical, default false
-    %     Note if function should fail in this case.
+    %     Note if function should throw error.
     %     Expected gets ignored if set to true.
     arguments
         f (1, 1) function_handle
@@ -165,7 +165,7 @@ function test_function(f, expected, kwargs)
     answer = stringify(answer);
     expected = stringify(expected);
 
-    fprintf(FMT_STR, func, answer, expected);
+    fprintf(FMT_STR, func, expected, answer);
     fprintf("\n");
 end
 
@@ -203,22 +203,28 @@ function answer = test_equal(a, b)
     elseif isnumeric(a)
         answer = true;
         for k = 1:numel(a)
-            answer = answer && isclose(a(k), b(k));
+            answer = answer && isclose(a(k), b(k), REL_TOL, ABS_TOL);
         end
     else
         answer = isequal(a, b);
     end
 end
 
-function answer = isclose(a, b)
+function answer = isclose(a, b, rel_tol, abs_tol)
     % Copied from the cpython implementation:
     % https://docs.python.org/3/library/math.html#math.isclose
+    arguments
+        a (1, 1) double
+        b (1, 1) double
+        rel_tol (1, 1) double = 1e-9
+        abs_tol (1, 1) double = 0.0
+    end
 
     % This function could easily be vectorized but I decided
     % against that for clearity + correctness.
 
     % sanity check on the inputs
-    if REL_TOL < 0.0 || ABS_TOL < 0.0
+    if rel_tol < 0.0 || abs_tol < 0.0
         error("tolerance must be non-negative");
     end
 
@@ -240,9 +246,9 @@ function answer = isclose(a, b)
 
     diff = abs(b - a);
 
-    answer = (diff <= abs(REL_TOL * b));
-    answer = answer || (diff <= abs(REL_TOL * a));
-    answer = answer || (diff <= ABS_TOL);
+    answer = (diff <= abs(rel_tol * b));
+    answer = answer || (diff <= abs(rel_tol * a));
+    answer = answer || (diff <= abs_tol);
 end
 
 function str = stringify(a)
