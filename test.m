@@ -256,13 +256,18 @@ function str = stringify(a)
 
     if isequal(size(a), [1, 1])
         str = string(a);
-        return;
+    elseif iscell(a) || isstruct(a) || istabular(a)
+        % hack a bit to avoid errors while stringifying student results.
+        % maybe replace with proper recursive string creation :)
+        % https://stackoverflow.com/questions/12799161/is-there-a-matlab-function-to-convert-any-data-structure-to-a-string
+        str = strip(evalc('disp(a)'));
+    else
+        a = string(a);
+        [nrows, ~] = size(a);
+        rows = strings(nrows, 1);
+        for row = 1:nrows
+            rows(row) = strjoin(a(row, :), ",");
+        end
+        str = "[" + strjoin(rows, ";") + "]";
     end
-    a = string(a);
-    [nrows, ~] = size(a);
-    rows = strings(nrows, 1);
-    for row = 1:nrows
-        rows(row) = strjoin(a(row, :), ",");
-    end
-    str = "[" + strjoin(rows, ";") + "]";
 end
