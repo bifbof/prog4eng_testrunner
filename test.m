@@ -15,10 +15,12 @@
 % - `run_function` runs function, returns result and if function finished.
 % - `test_equal`, `is_close`, `stringify` are smaller helper functions
 
-% Possible Extensions / Limitations:
-% - Functions so far can only return one value (which is okay in most cases)
-% - Only supports arrays as output so far (includes scalars). Because test_equal
-%   will fail on nested types, and stringify assumes arrays as input.
+% Limitations (Possible Extensions):
+% - Only the first return value of the function is checked, the rest is dropped
+%   (this should be okay for most cases)
+% - Nested data is supported, but the equal check does not recursively step down.
+%   So if you have e.g. struct of inexact doubles you cannot check is_close on them
+%   A fix shouldn't be too hard.
 % - The horizontal space in the terminal is limited, this can be a problem if
 %   expected and output value are too big.
 
