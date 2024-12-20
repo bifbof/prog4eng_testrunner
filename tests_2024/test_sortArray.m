@@ -6,42 +6,26 @@
 % Experiment for a testrunner for Prog4Eng
 % Date: 2024
 % Author: Christof Leutenegger
-% It is not a lot of code, I tried my best to make it readable. :)
-
-% Short description for all functions as an overview
-% - `test` is the test-harness/test-runner, see there for examples.
-% - functions in CAPS are used as constant values.
-% - `test_function` runs a test and prints the output
-% - `run_function` runs function, returns result and if function finished.
-% - `test_equal`, `is_close`, `stringify` are smaller helper functions
-
-% Limitations (Possible Extensions):
-% - Only the first return value of the function is checked, the rest is dropped
-%   (this should be okay for most cases)
-% - Nested data is supported, but the equal check does not recursively step down.
-%   So if you have e.g. struct of inexact doubles you cannot check is_close on them
-%   A fix shouldn't be too hard.
-% - The horizontal space in the terminal is limited, this can be a problem if
-%   expected and output value are too big. Wrong output from students can destroy formatting.
-%   Thus maybe do it like pytest and split error and error messages up.
-
-function test()
+function test_sortArray()
     print_header();
-
-    % test should pass
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0)
-    % test should fail as output ~= expected
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
-    % test should pass as function throws error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_error=true)
-    % test should fail as function fails to throw error
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_error=true);
-    % test should error as function throws unexpected error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
-    % test should pass (is within rel_tol)
-    test_function(@() [1, 2; 3, 4], [1 + 1e-10, 2 + 2e-10; 3 + 3e-10, 4 + 4e-10]);
-    % test should timeout as function does not finish on time
-    test_function(@() infinite_loop(), 0);
+    % todo maybe add non-integers (strings, chars, etc)
+    test_function(@()sortArray([]), []);
+    test_function(@()sortArray([1]), 1); %#ok<NBRAK2>
+    test_function(@()sortArray([-1, Inf, -Inf]), [inf, -1, -inf]);
+    test_function(@()sortArray([0, 1, 0, 1, 0, 1, 0, 1]), [1, 1, 1, 1, 0, 0, 0, 0])
+    test_function(@()sortArray([1, 0, 1, 0, 1, 0, 1, 0]), [1, 1, 1, 1, 0, 0, 0, 0])
+    test_function(@()sortArray([4, 4, 4, 3, 3, 3]), [4, 4, 4, 3, 3, 3]);
+    test_function(@()sortArray([-8 -6 -0 -5 -4]), [-8 -6 -5 -4 -0])
+    test_function(@()sortArray([-2  1  7  9 -3]), [9  7  1 -2 -3])
+    test_function(@()sortArray([ 0  9 -4 -3 -8]), [9  0 -3 -4 -8])
+    test_function(@()sortArray([ 5  4  0  8 -9]), [8  5  4  0 -9])
+    test_function(@()sortArray([ 5 -5  2 -8 -7]), [5  2 -5 -7 -8])
+    test_function(@()sortArray([-6  6 -5  4 -7]), [6  4 -5 -6 -7])
+    test_function(@()sortArray([-9 -2  6  2 -1]), [6  2 -1 -2 -9])
+    test_function(@()sortArray([ 5 -1 -9 -3  2]), [5  2 -1 -3 -9])
+    test_function(@()sortArray([ 1 -8  4  0 -5]), [4  1  0 -5 -8])
+    test_function(@()sortArray([-1 -2 -3  4 -4]), [4 -1 -2 -3 -4])
+    test_function(@()sortArray([ 6 -8  3 -7  1]), [6  3  1 -7 -8])
 end
 
 %% Global constants
@@ -52,7 +36,7 @@ end
 function val = REL_TOL
     % Relative tolerance for comparing numbers.
     % see https://docs.python.org/3/library/math.html#math.isclose
-    val = 1e-09;
+    val = 0.0;
 end
 function val = ABS_TOL
     % Absolute tolerance for comparing numbers.
@@ -60,7 +44,7 @@ function val = ABS_TOL
     val = 0.0;
 end
 function val = FMT_STR
-    val = "%-50s %-12s %-12s";
+    val = "%-30s %-20s %-20s";
 end
 
 %% Enum for `run_function` return values
@@ -72,13 +56,6 @@ function val = STATUS_ERROR
 end
 function val = STATUS_TIMEOUT
     val = 2;
-end
-
-%% Function to show timeout mechanic
-function answer = infinite_loop()
-    answer = 0; %#ok<NASGU>
-    while true
-    end
 end
 
 %% Functions to run test

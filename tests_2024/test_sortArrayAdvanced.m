@@ -6,42 +6,31 @@
 % Experiment for a testrunner for Prog4Eng
 % Date: 2024
 % Author: Christof Leutenegger
-% It is not a lot of code, I tried my best to make it readable. :)
+function test_sortArrayAdvanced()
+    print_header()
+    test_function(@()sortArrayAdvanced([], "ascending"), []);
+    test_function(@()sortArrayAdvanced([], "descending"), []);
+    test_function(@()sortArrayAdvanced([1], "ascending"), [1]);
+    test_function(@()sortArrayAdvanced([1], "descending"), [1]);
+    test_function(@()sortArrayAdvanced([-1, Inf, -Inf], "ascending"), [-inf, -1, +inf]);
+    test_function(@()sortArrayAdvanced([-1, Inf, -Inf], "descending"), [+inf, -1, -inf]);
+    test_function(@()sortArrayAdvanced([]), [], should_error=true);
+    test_function(@()sortArrayAdvanced([], "asc"), [], should_error=true);
+    disp(" ");
 
-% Short description for all functions as an overview
-% - `test` is the test-harness/test-runner, see there for examples.
-% - functions in CAPS are used as constant values.
-% - `test_function` runs a test and prints the output
-% - `run_function` runs function, returns result and if function finished.
-% - `test_equal`, `is_close`, `stringify` are smaller helper functions
-
-% Limitations (Possible Extensions):
-% - Only the first return value of the function is checked, the rest is dropped
-%   (this should be okay for most cases)
-% - Nested data is supported, but the equal check does not recursively step down.
-%   So if you have e.g. struct of inexact doubles you cannot check is_close on them
-%   A fix shouldn't be too hard.
-% - The horizontal space in the terminal is limited, this can be a problem if
-%   expected and output value are too big. Wrong output from students can destroy formatting.
-%   Thus maybe do it like pytest and split error and error messages up.
-
-function test()
-    print_header();
-
-    % test should pass
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0)
-    % test should fail as output ~= expected
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
-    % test should pass as function throws error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_error=true)
-    % test should fail as function fails to throw error
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_error=true);
-    % test should error as function throws unexpected error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
-    % test should pass (is within rel_tol)
-    test_function(@() [1, 2; 3, 4], [1 + 1e-10, 2 + 2e-10; 3 + 3e-10, 4 + 4e-10]);
-    % test should timeout as function does not finish on time
-    test_function(@() infinite_loop(), 0);
+    test_function(@()sortArrayAdvanced([0, 1, 0, 1, 0, 1, 0, 1], "ascending"), [0, 0, 0, 0, 1, 1, 1, 1])
+    test_function(@()sortArrayAdvanced([1, 0, 1, 0, 1, 0, 1, 0], "ascending"), [0, 0, 0, 0, 1, 1, 1, 1])
+    test_function(@()sortArrayAdvanced([-2  1  7  9 -3], "ascending"), [-3 -2  1  7  9])
+    test_function(@()sortArrayAdvanced([ 0  9 -4 -3 -8], "ascending"), [-8 -4 -3  0  9])
+    test_function(@()sortArrayAdvanced([ 5  4  0  8 -9], "ascending"), [-9  0  4  5  8])
+    test_function(@()sortArrayAdvanced([ 5 -5  2 -8 -7], "ascending"), [-8 -7 -5  2  5])
+    disp(" ");
+    test_function(@()sortArrayAdvanced([0, 1, 0, 1, 0, 1, 0, 1], "descending"), [1, 1, 1, 1, 0, 0, 0, 0])
+    test_function(@()sortArrayAdvanced([1, 0, 1, 0, 1, 0, 1, 0], "descending"), [1, 1, 1, 1, 0, 0, 0, 0])
+    test_function(@()sortArrayAdvanced([-2  1  7  9 -3], "descending"), [ 9  7  1 -2 -3])
+    test_function(@()sortArrayAdvanced([ 0  9 -4 -3 -8], "descending"), [ 9  0 -3 -4 -8])
+    test_function(@()sortArrayAdvanced([ 5  4  0  8 -9], "descending"), [ 8  5  4  0 -9])
+    test_function(@()sortArrayAdvanced([ 5 -5  2 -8 -7], "descending"), [ 5  2 -5 -7 -8])
 end
 
 %% Global constants
@@ -52,7 +41,7 @@ end
 function val = REL_TOL
     % Relative tolerance for comparing numbers.
     % see https://docs.python.org/3/library/math.html#math.isclose
-    val = 1e-09;
+    val = 0.0;
 end
 function val = ABS_TOL
     % Absolute tolerance for comparing numbers.
@@ -60,7 +49,7 @@ function val = ABS_TOL
     val = 0.0;
 end
 function val = FMT_STR
-    val = "%-50s %-12s %-12s";
+    val = "%-50s %-20s %-20s";
 end
 
 %% Enum for `run_function` return values
@@ -72,13 +61,6 @@ function val = STATUS_ERROR
 end
 function val = STATUS_TIMEOUT
     val = 2;
-end
-
-%% Function to show timeout mechanic
-function answer = infinite_loop()
-    answer = 0; %#ok<NASGU>
-    while true
-    end
 end
 
 %% Functions to run test

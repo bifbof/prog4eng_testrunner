@@ -1,47 +1,20 @@
 % Run tests for the function programmed in the exercise
 %
 % To call just run the following in the script or the command window:
-% test()
+% test_findRootByBisection()
 
-% Experiment for a testrunner for Prog4Eng
 % Date: 2024
 % Author: Christof Leutenegger
-% It is not a lot of code, I tried my best to make it readable. :)
-
-% Short description for all functions as an overview
-% - `test` is the test-harness/test-runner, see there for examples.
-% - functions in CAPS are used as constant values.
-% - `test_function` runs a test and prints the output
-% - `run_function` runs function, returns result and if function finished.
-% - `test_equal`, `is_close`, `stringify` are smaller helper functions
-
-% Limitations (Possible Extensions):
-% - Only the first return value of the function is checked, the rest is dropped
-%   (this should be okay for most cases)
-% - Nested data is supported, but the equal check does not recursively step down.
-%   So if you have e.g. struct of inexact doubles you cannot check is_close on them
-%   A fix shouldn't be too hard.
-% - The horizontal space in the terminal is limited, this can be a problem if
-%   expected and output value are too big. Wrong output from students can destroy formatting.
-%   Thus maybe do it like pytest and split error and error messages up.
-
-function test()
+function test_Hotel()
     print_header();
-
-    % test should pass
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0)
-    % test should fail as output ~= expected
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 1)
-    % test should pass as function throws error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0, should_error=true)
-    % test should fail as function fails to throw error
-    test_function(@() findRootByBisection(@(x) x, -1, 1), 0, should_error=true);
-    % test should error as function throws unexpected error
-    test_function(@() findRootByBisection(@(x) x, 1, 2), 0)
-    % test should pass (is within rel_tol)
-    test_function(@() [1, 2; 3, 4], [1 + 1e-10, 2 + 2e-10; 3 + 3e-10, 4 + 4e-10]);
-    % test should timeout as function does not finish on time
-    test_function(@() infinite_loop(), 0);
+    test_function(@()Hotel("Dolder", 5, 2).name, "Dolder");
+    test_function(@()Hotel("Dolder", 5, 2).numRooms, 2);
+    test_function(@()Hotel("Dolder", 5, 2).guests, ["", ""], should_error=true);
+    test_function(@()Hotel("Dolder", 5, 2).occupancy, 0);
+    test_function(@()Hotel("Dolder", 5, 2).getNumAvailRooms(), 2);
+    test_function(@()Hotel("Dolder", 5, 2).checkIn("A").getNumAvailRooms(), 1);
+    test_function(@()Hotel("Dolder", 5, 2).checkIn("A").checkIn("B").getNumAvailRooms(), 0);
+    test_function(@()Hotel("Dolder", 5, 2).checkIn("A").checkOut("A").getNumAvailRooms(), 2);
 end
 
 %% Global constants
@@ -52,7 +25,7 @@ end
 function val = REL_TOL
     % Relative tolerance for comparing numbers.
     % see https://docs.python.org/3/library/math.html#math.isclose
-    val = 1e-09;
+    val = 0.0;
 end
 function val = ABS_TOL
     % Absolute tolerance for comparing numbers.
@@ -60,7 +33,7 @@ function val = ABS_TOL
     val = 0.0;
 end
 function val = FMT_STR
-    val = "%-50s %-12s %-12s";
+    val = "%-65s %-10s %-10s";
 end
 
 %% Enum for `run_function` return values
@@ -72,13 +45,6 @@ function val = STATUS_ERROR
 end
 function val = STATUS_TIMEOUT
     val = 2;
-end
-
-%% Function to show timeout mechanic
-function answer = infinite_loop()
-    answer = 0; %#ok<NASGU>
-    while true
-    end
 end
 
 %% Functions to run test
